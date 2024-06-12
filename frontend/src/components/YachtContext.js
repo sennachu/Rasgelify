@@ -1,167 +1,60 @@
-import React, { createContext, useEffect, useState } from 'react';
-//import data
-import { yachtesData } from '../data';
+// src/context/YachtContext.js
+import React, { createContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
-//create context
 export const YachtContext = createContext();
 
-const YachtContextProvider = ({ children }) => {
-
-  const [yachts, setYachts] = useState(yachtesData);
-  const [country, setCountry] = useState('Location type (any)');
+const YachtProvider = ({ children }) => {
+  const [yachts, setYachts] = useState([]);
   const [countries, setCountries] = useState([]);
-  const [property, setProperty] = useState('Property type (any)');
   const [properties, setProperties] = useState([]);
-  const [price, setPrice] = useState('Price range (any)');
-  const [prices, setPrices] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [filteredYachts, setFilteredYachts] = useState([]);
 
-  //return all countries
   useEffect(() => {
-    const allCountries = yachts.map((yachts) => {
-      return yachts.country
-    });
-    //remove duplicates
-    const uniqueCountries = ['Location type (any)', ... new Set(allCountries)];
-    //set countries state
-    setCountries(uniqueCountries)
-  },[]);
+    const fetchYachts = async () => {
+      try {
+        const yachtResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/boats`);
+        setYachts(yachtResponse.data);
+        setFilteredYachts(yachtResponse.data); // Başlangıçta tüm yatları göster
 
-  //return all properties
-  useEffect(() => {
-    const allProperties = yachts.map((yachts) => {
-      return yachts.type
-    });
-    //remove duplicates
-    const uniqueProperties = ['Property type (any)', ... new Set(allProperties)];
-    //set properties state
-    setProperties(uniqueProperties)
-  },[]);
+        // Ülkeleri çıkaralım
+        const uniqueCountries = [...new Set(yachtResponse.data.map(boat => boat.country))];
+        const countryData = uniqueCountries.map((country, index) => ({ code: index, name: country }));
+        setCountries(countryData);
 
-  //return all prices
-  useEffect(() => {
-    const allPrices = yachts.map((yachts) => {
-      return yachts.price
-    });
-    //remove duplicates
-    const uniquePrices = ['Price range (any)', ... new Set(allPrices)];
-    //set properties state
-    setPrices(uniquePrices)
-  },[]);
-  
-  
-  const handleClick = () => {
-    //set loading
-    setLoading(true);
-    //create a function that checks if the string includes any
-    const isDefault = (str) => {
-      return str.split(' ').includes('(any)');
+        // Özellikleri çıkaralım
+        const uniqueProperties = [...new Set(yachtResponse.data.map(boat => boat.type))];
+        const propertyData = uniqueProperties.map((property, index) => ({ code: index, name: property }));
+        setProperties(propertyData);
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Veri çekme hatası:', error);
+        setLoading(false);
+      }
     };
-    //get first value of price and parse it to number
-    const minPrice = parseInt(price.split(' ')[0]);
-    //get second value of price and parse it to number
-    const maxPrice = parseInt(price.split(' ')[2]);
 
-    const newYachtes = yachtesData.filter((yachts)=> {
-      const yachtPrice = parseInt(yachts.price);
+    fetchYachts();
+  }, []);
 
-      //if all values are selected
-      if (
-        yachts.country === country && 
-        yachts.type === property && 
-        yachts.price >= minPrice &&
-         yachts.price <= maxPrice 
-        ) {
-          return yachts;
-        }
-
-      //if all value are default
-      if (
-        isDefault(country) && isDefault(property) & isDefault(price)
-      ) {
-          return yachts;
-      }
-        
-      //if country is not default
-      if (
-        !isDefault(country) && isDefault(property) && isDefault(price)
-      ) {
-        return yachts.country === country;
-      }
-
-      //if property is not default
-      if (
-        !isDefault(property) && isDefault(country) && isDefault(price)
-      ) {
-        return yachts.type === property;
-      }
-
-      //if price is not default
-      if (
-        !isDefault(price) && isDefault(country) && isDefault(property)
-      ) {
-        if (
-          yachtPrice >= minPrice && yachtPrice <= maxPrice
-        ) {
-          return yachts;
-        }
-      }
-
-      //if country and property is not default
-      if (
-        !isDefault(country) && !isDefault(property) && isDefault(price)
-      ) {
-        return yachts.country === country && yachts.type === property
-      }
-
-      //if country and price is not default
-      if (
-        !isDefault(country) && isDefault(property) && !isDefault(price)
-      ) {
-        if (
-          yachtPrice >= minPrice && yachtPrice <= maxPrice
-        ){
-          return yachts.country === country;
-        }
-      }
-
-      //if property and price is not default
-      if (
-        isDefault(country) && !isDefault(property) && !isDefault(price)
-      ){
-        if(
-          yachtPrice >= minPrice && yachtPrice <= maxPrice
-        ){
-          return yachts.type === property
-        }
-      }
+  const handleClick = (selectedCountry, selectedProperty, selectedPriceRange) => {
+    // Arama işlemini gerçekleştirme
+    const filtered = yachts.filter((yacht) => {
+      return (
+        (selectedCountry ? yacht.country === selectedCountry : true) &&
+        (selectedProperty ? yacht.type === selectedProperty : true) &&
+        (selectedPriceRange ? yacht.price <= selectedPriceRange : true)
+      );
     });
-    setTimeout(() => {
-      return newYachtes.length < 1 ? setYachts([]) :
-      setYachts(newYachtes),
-      setLoading(false);
-    }, 500)
-    
+    setFilteredYachts(filtered);
   };
 
   return (
-    <YachtContext.Provider value={{
-      country,
-      setCountry,
-      countries,
-      property,
-      setProperty,
-      properties,
-      setProperties,
-      price,
-      setPrice,
-      yachts,
-      loading,
-      handleClick,
-    }}>
+    <YachtContext.Provider value={{ yachts, countries, properties, loading, filteredYachts, handleClick }}>
       {children}
     </YachtContext.Provider>
   );
 };
 
-export default YachtContextProvider;
+export default YachtProvider;

@@ -1,17 +1,10 @@
-const APIError = require("../utils/errors")
-
-const errorHandlerMiddleware = (err, req, res, next) => {
-    if (err instanceof APIError) {
-        return res.status(err.statusCode || 400)
-            .json({
-                succes: false,
-                message: err.message
-            })
-    }
-    return res.status(500).json({
-        succes: false,
-        message: "Bir hata ile karşılaştık. Lütfen apinizi kontrol edin."
-    })
+function errorHandler(err, req, res, next) {
+    console.error(err);
+    res.status(err.status || 500).json({
+        error: {
+            message: err.message || 'Internal Server Error'
+        }
+    });
 }
 
-module.exports = errorHandlerMiddleware
+module.exports = errorHandler;

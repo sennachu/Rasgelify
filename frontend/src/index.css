@@ -22,3 +22,16 @@
     @apply px-6 py-8 text-[15px] space-y-6 shadow-md bg-white absolute w-full z-10 list-none rounded-b-lg;
   }
 }
+/* src/index.css */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+img {
+  border-radius: 0.5rem;
+}
+
+button {
+  transition: background-color 0.3s ease;
+}

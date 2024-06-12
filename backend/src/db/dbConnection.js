@@ -1,10 +1,13 @@
-const mongoose = require("mongoose")
+const mongoose = require('mongoose');
 
-mongoose.connect(process.env.DB_URL, {
-})
-    .then(()=> {
-        console.log("Veritabanına başarı ile bağlandı.");
-    })
-    .catch((err)=>{
-        console.log("Veritabanına bağlanılamadı: ", err);
-    })
+const connectDB = async () => {
+    try {
+        await mongoose.connect(process.env.DB_URL);
+        console.log('MongoDB connected...');
+    } catch (err) {
+        console.error(err.message);
+        process.exit(1);
+    }
+};
+
+module.exports = connectDB;
