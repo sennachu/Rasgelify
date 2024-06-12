@@ -13,7 +13,7 @@ const YachtContextProvider = ({ children }) => {
   const [property, setProperty] = useState('Property type (any)');
   const [properties, setProperties] = useState([]);
   const [price, setPrice] = useState('Price range (any)');
-  const [setPrices] = useState([]);
+  const [prices, setPrices] = useState([]);
   const [loading, setLoading] = useState(false);
 
   //return all countries
